@@ -1,80 +1,58 @@
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
+# Copyright 2018 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
-from sklearn.pipeline import make_pipeline
-from sklearn.decomposition import PCA
-from sklearn.cluster import KMeans, MiniBatchKMeans
-from sklearn.manifold import TSNE
-from sklearn.decomposition import TruncatedSVD
-from sklearn.preprocessing import normalize
+# [START gae_python37_app]
+from flask import Flask
+from flask import request
+import smtplib
+from email.mime.text import MIMEText
+from email.utils import formataddr
 
-from helpers import *
+# If `entrypoint` is not defined in app.yaml, App Engine will look for an app
+# called `app` in `main.py`.
+app = Flask(__name__)
 
-emails = pd.read_csv('/Users/charlesbowenshi/Desktop/Hackharvard19/split_emails.csv')
 
-# create a new frame with the data we need.
-email_df = pd.DataFrame(parse_into_emails(emails.message))
+@app.route('/api/mailbot')
+def hello():
+    """Return a friendly HTTP greeting."""
+    email = request.args.get('email')
 
-# Drop emails with empty body, to or from_ columns.
-email_df.drop(email_df.query("body == '' | to == '' | from_ == ''").index, inplace=True)
-# print len(email_data.from_.unique()) # 1222 unique email addresses
-# print len(email_data.to.unique())  # 1593 unique email addresses
-# print email_df.head()
+    # Logic to select receipient
+    # # TODO:
 
-# At this stage we are sure we have sanitized all the data we need.
-# print email_data.shape # (9464, 4)
+    my_sender='pythondistributionbot@gmail.com'    # Sender Mail
+    my_pass = 'czwcekimsscsixzx'              # Sender PW
+    my_user='drcharlesshi@gmail.com'      # Reciver Mail
+    try:
+        msg=MIMEText('填写邮件内容','plain','utf-8')
+        msg['From']=formataddr(["FromRunoob",my_sender])  # Sender Nick/mail
+        msg['To']=formataddr(["FK",email])              # Reciver Nike/Mail
+        msg['Subject']="发送邮件测试"                # Topic
 
-# tokenize the bodies and convert them
-# into a document-term matrix.
+        server=smtplib.SMTP_SSL("smtp.gmail.com", 465)  # SMTP，port 465
+        server.login(my_sender, my_pass)  # 括号中对应的是发件人邮箱账号、邮箱密码
+        server.sendmail(my_sender,[my_user,],msg.as_string())  # 括号中对应的是发件人邮箱账号、收件人邮箱账号、发送邮件
+        server.quit()  # 关闭连接
+    except Exception:  # 如果 try 中的语句没有执行，则会执行下面的 ret=False
+        return 'Failure ' + request.args.get('email')
+    return 'Success ' +
 
-# Some note on min_df and max_df
-# max_df=0.5 means "ignore all terms that appear in more then 50% of the documents"
-# min_df=2 means "ignore all terms that appear in less then 2 documents"
-stopwords = ENGLISH_STOP_WORDS.union(['ect', 'hou', 'com', 'recipient'])
-vect = TfidfVectorizer(analyzer='word', stop_words=stopwords, max_df=0.3, min_df=2)
 
-X = vect.fit_transform(email_df.body)
-features = vect.get_feature_names()
-
-# print the top 10 terms in document 1
-# print top_feats_in_doc(X, features, 1, 10)
-
-# print the top terms across all documents.
-# print top_mean_feats(X, features, None, 0.1, 10)
-
-# As clustering algorithm KMeams is a perfect fit.
-n_clusters = 3
-clf = KMeans(n_clusters=n_clusters,
-            max_iter=100,
-            init='k-means++',
-            n_init=1)
-labels = clf.fit_predict(X)
-
-# For larger datasets use mini-batch KMeans, dont have to read all data into memory.
-# batch_size = 500
-# clf = MiniBatchKMeans(n_clusters=n_clusters, init_size=1000, batch_size=batch_size, max_iter=100)
-# clf.fit(X)
-
-# plot this with matplotlib to visualize it.
-# First we need to make 2D coordinates from the sparse matrix.
-X_dense = X.todense()
-pca = PCA(n_components=2).fit(X_dense)
-coords = pca.transform(X_dense)
-
-# plot it again, but this time we add some color to it.
-# This array needs to be at least the length of the n_clusters.
-label_colors = ["#2AB0E9", "#2BAF74", "#D7665E", "#CCCCCC",
-                "#D2CA0D", "#522A64", "#A3DB05", "#FC6514"]
-colors = [label_colors[i] for i in labels]
-
-#plt.scatter(coords[:, 0], coords[:, 1], c=colors)
-# Plot the cluster centers
-centroids = clf.cluster_centers_
-centroid_coords = pca.transform(centroids)
-# plt.scatter(centroid_coords[:, 0], centroid_coords[:, 1], marker='X', s=200, linewidths=2, c='#444d60')
-# plt.show()
-
-#Use this to print the top terms per cluster with matplotlib.
-plot_tfidf_classfeats_h(top_feats_per_cluster(X, labels, features, 0.1, 25))
+if __name__ == '__main__':
+    # This is used when running locally only. When deploying to Google App
+    # Engine, a webserver process such as Gunicorn will serve the app. This
+    # can be configured by adding an `entrypoint` to app.yaml.
+    app.run(host='127.0.0.1', port=8080, debug=True)
+# [END gae_python37_app]

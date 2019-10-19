@@ -1,0 +1,12 @@
+runtime: python27
+api_version: 1
+threadsafe: yes
+inbound_services:
+  - mail
+handlers:
+- url: /_ah/mail/.+
+  script: handle_incoming_email.app
+  login: admin
+libraries:
+- name: ssl
+  version: latest
