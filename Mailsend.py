@@ -5,9 +5,9 @@ import smtplib
 from email.mime.text import MIMEText
 from email.utils import formataddr
 
-my_sender='drcharlesshi@gmail.com'    # Sender Mail
-my_pass = 'xeryktazoozbwddu'              # Sender PW
-my_user='susanzhang0407@gmail.com'      # Reciver Mail
+my_sender='pythondistributionbot@gmail.com'    # Sender Mail
+my_pass = 'czwcekimsscsixzx'              # Sender PW
+my_user='drcharlesshi@gmail.com'      # Reciver Mail
 def mail():
     ret=True
     try:
